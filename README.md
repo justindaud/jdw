@@ -146,17 +146,72 @@ Both are necessary for the monorepo structure to work correctly.
 
 ### Vercel (Recommended)
 
-1. Connect your GitHub repository to Vercel
-2. Set root directory to `apps/web`
-3. Deploy!
+Vercel provides:
+- ✅ Automatic HTTPS/SSL certificates
+- ✅ Custom domain support
+- ✅ Global CDN
+- ✅ Auto-deploy from GitHub
+- ✅ Free tier for most projects
 
-### Manual Deployment
+#### Setup Steps:
+
+1. **Push to GitHub** (already done!)
+   ```bash
+   git push origin main
+   ```
+
+2. **Import to Vercel**
+   - Go to [vercel.com](https://vercel.com)
+   - Click "Import Project"
+   - Select your GitHub repository `justindaud/jdw`
+   - Vercel will auto-detect the `vercel.json` configuration
+
+3. **Configure (if needed)**
+   - Framework: Next.js (auto-detected)
+   - Root Directory: Leave as `.` (root)
+   - Build Command: `cd apps/web && npm run build`
+   - Output Directory: `apps/web/.next`
+   
+   **Note:** The `vercel.json` file handles this automatically!
+
+4. **Deploy!**
+   - Click "Deploy"
+   - Wait ~2 minutes
+   - Your site is live at `https://your-project.vercel.app`
+
+#### Custom Domain Setup:
+
+1. **Add Domain in Vercel**
+   - Go to Project Settings → Domains
+   - Add your domain (e.g., `jakaldesignweek.com`)
+
+2. **Update DNS Records**
+   - Add CNAME record: `www` → `cname.vercel-dns.com`
+   - Add A record: `@` → `76.76.21.21`
+   
+   Or use Vercel nameservers for easier management.
+
+3. **HTTPS**
+   - Automatic! Vercel provisions SSL certificate via Let's Encrypt
+   - No configuration needed
+
+#### Environment Variables (if needed):
+
+1. Go to Project Settings → Environment Variables
+2. Add variables (e.g., `NEXT_PUBLIC_API_URL`)
+3. Redeploy to apply changes
+
+### Alternative: Manual Deployment
+
+If self-hosting:
 
 ```bash
 cd apps/web
 npm run build
 npm run start
 ```
+
+Then use a reverse proxy (nginx/caddy) for HTTPS and domain.
 
 ## 📄 License
 
