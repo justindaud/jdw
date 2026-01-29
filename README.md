@@ -144,66 +144,126 @@ Both are necessary for the monorepo structure to work correctly.
 
 ## 🚢 Deployment
 
-### Vercel (Recommended)
+### Docker (Recommended)
 
-Vercel provides:
-- ✅ Automatic HTTPS/SSL certificates
-- ✅ Custom domain support
-- ✅ Global CDN
-- ✅ Auto-deploy from GitHub
-- ✅ Free tier for most projects
+The application is containerized using Docker for consistent deployment across environments.
 
-#### Setup Steps:
+#### Prerequisites
 
-1. **Push to GitHub** (already done!)
+- Docker installed ([Get Docker](https://docs.docker.com/get-docker/))
+- Docker Compose installed (included with Docker Desktop)
+
+#### Quick Start
+
+1. **Build and run with Docker Compose**
    ```bash
-   git push origin main
+   docker-compose up -d
+   ```
+   
+   Your app will be available at `http://localhost:3000`
+
+2. **Stop the container**
+   ```bash
+   docker-compose down
    ```
 
-2. **Import to Vercel**
-   - Go to [vercel.com](https://vercel.com)
-   - Click "Import Project"
-   - Select your GitHub repository `justindaud/jdw`
-   - Vercel will auto-detect the `vercel.json` configuration
+#### Manual Docker Build
 
-3. **Configure (if needed)**
-   - Framework: Next.js (auto-detected)
-   - Root Directory: Leave as `.` (root)
-   - Build Command: `cd apps/web && npm run build`
-   - Output Directory: `apps/web/.next`
+```bash
+# Build the image
+docker build -t jdw-website .
+
+# Run the container
+docker run -p 3000:3000 jdw-website
+```
+
+#### Production Deployment
+
+For production with HTTPS and custom domain:
+
+1. **Build the Docker image**
+   ```bash
+   docker build -t jdw-website:latest .
+   ```
+
+2. **Set up reverse proxy (nginx/Caddy)**
    
-   **Note:** The `vercel.json` file handles this automatically!
+   Example nginx configuration:
+   ```nginx
+   server {
+       listen 80;
+       server_name jakaldesignweek.com;
+       
+       location / {
+           proxy_pass http://localhost:3000;
+           proxy_http_version 1.1;
+           proxy_set_header Upgrade $http_upgrade;
+           proxy_set_header Connection 'upgrade';
+           proxy_set_header Host $host;
+           proxy_cache_bypass $http_upgrade;
+       }
+   }
+   ```
 
-4. **Deploy!**
-   - Click "Deploy"
-   - Wait ~2 minutes
-   - Your site is live at `https://your-project.vercel.app`
+3. **Enable HTTPS with Let's Encrypt**
+   ```bash
+   # Using Certbot
+   sudo certbot --nginx -d jakaldesignweek.com
+   ```
 
-#### Custom Domain Setup:
+4. **Run with docker-compose in production**
+   ```bash
+   docker-compose up -d
+   ```
 
-1. **Add Domain in Vercel**
-   - Go to Project Settings → Domains
-   - Add your domain (e.g., `jakaldesignweek.com`)
+#### Environment Variables
 
-2. **Update DNS Records**
-   - Add CNAME record: `www` → `cname.vercel-dns.com`
-   - Add A record: `@` → `76.76.21.21`
-   
-   Or use Vercel nameservers for easier management.
+Create `.env.local` file in `apps/web/` for environment-specific variables:
 
-3. **HTTPS**
-   - Automatic! Vercel provisions SSL certificate via Let's Encrypt
-   - No configuration needed
+```env
+NODE_ENV=production
+NEXT_PUBLIC_API_URL=https://api.example.com
+```
 
-#### Environment Variables (if needed):
+Update `docker-compose.yml` to include env file:
+```yaml
+services:
+  web:
+    env_file:
+      - apps/web/.env.local
+```
 
-1. Go to Project Settings → Environment Variables
-2. Add variables (e.g., `NEXT_PUBLIC_API_URL`)
-3. Redeploy to apply changes
+#### Docker Image Optimization
+
+The Dockerfile uses multi-stage builds:
+- **Stage 1 (deps):** Production dependencies only
+- **Stage 2 (builder):** Build the Next.js app
+- **Stage 3 (runner):** Minimal runtime image (~150MB)
+
+#### Health Checks
+
+The container includes health checks:
+```bash
+# Check container health
+docker ps
+
+# View logs
+docker-compose logs -f web
+```
+
+#### Updating the Application
+
+```bash
+# Pull latest code
+git pull origin main
+
+# Rebuild and restart
+docker-compose up -d --build
+```
 
 ### Alternative: Manual Deployment
 
-If self-hosting:
+If not using Docker:
 
 ```bash
 cd apps/web
@@ -211,7 +271,7 @@ npm run build
 npm run start
 ```
 
-Then use a reverse proxy (nginx/caddy) for HTTPS and domain.
+Then set up nginx/Caddy as reverse proxy for HTTPS.
 
 ## 📄 License
 
